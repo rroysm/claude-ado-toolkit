@@ -1,0 +1,97 @@
+{
+  "inputs": [
+    {
+      "id": "ado_org",
+      "type": "promptString",
+      "description": "Azure DevOps organization name (e.g. 'contoso')"
+    }
+  ],
+  "servers": {
+    "ado": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "${input:ado_org}"]
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SETUP INSTRUCTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 1. Place this file at .vscode/mcp.json in your repo root.
+//    Every developer who opens the repo in VS Code gets the ADO MCP server
+//    automatically — no per-machine setup.
+//
+// 2. Open VS Code → GitHub Copilot chat → switch to "Agent Mode".
+//    Click "Select Tools" and enable the ADO tools you need.
+//
+// 3. When prompted, enter your Azure DevOps organisation name (e.g. contoso).
+//    Authentication uses your Microsoft Entra (Azure AD) account by default —
+//    the same login you use to access dev.azure.com.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// ALTERNATIVE: PAT token auth (CI/pipeline scenarios or on-prem ADO Server)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Set the environment variable before launching VS Code:
+//   export ADO_MCP_AUTH_TOKEN="<your-personal-access-token>"
+//
+// Then update the args array to:
+//   "args": ["-y", "@azure-devops/mcp", "${input:ado_org}", "--authentication", "envvar"]
+//
+// For on-prem Azure DevOps Server, replace the org arg with your full
+// collection URL, e.g.: "https://server:8080/tfs/DefaultCollection"
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// ALTERNATIVE: Remote MCP Server (no local install — public preview)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// {
+//   "servers": {
+//     "ado-remote-mcp": {
+//       "url": "https://mcp.dev.azure.com/<your-org>",
+//       "type": "http"
+//     }
+//   },
+//   "inputs": []
+// }
+//
+// Note: Remote MCP currently supports VS Code + GitHub Copilot only.
+// Claude Code and Claude Desktop require the local server (above) for now.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// DOMAIN FILTERING (optional — limit which ADO tools are loaded)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Append -d flags to restrict tool domains and keep context lean:
+//   "args": ["-y", "@azure-devops/mcp", "${input:ado_org}",
+//            "-d", "core", "work", "work-items", "repositories", "pipelines"]
+//
+// Available domains:
+//   core           → projects, teams, users
+//   work           → boards, sprints
+//   work-items     → create/read/update work items
+//   repositories   → repos, branches, commits
+//   pipelines      → build/release pipelines
+//   wiki           → wiki pages
+//   search         → code and work item search
+//   test-plans     → test plans and runs
+//   advanced-security → security alerts
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// CLAUDE CODE (terminal / Claude Code CLI)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Run once to register the MCP server globally for Claude Code:
+//   claude mcp add azure-devops -- npx -y @azure-devops/mcp <your-org>
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// TEST PROMPTS (once connected)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+//   "List all projects in my ADO org"
+//   "Show open work items assigned to me in the current sprint"
+//   "Summarise recent pipeline failures in the last 24 hours"
+//   "List open pull requests in the main repo"
+//   "Create a work item: Task titled 'Set up ADO MCP' in project Contoso"

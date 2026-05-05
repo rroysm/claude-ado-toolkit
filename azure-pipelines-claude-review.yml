@@ -1,0 +1,130 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# azure-pipelines-claude-review.yml
+#
+# Drop this file into your repo root (or merge it into your existing
+# azure-pipelines.yml) to run the Claude PR review agent on every pull request.
+#
+# Prerequisites:
+#   1. Install the "Claude Code Base Task" extension from the Azure DevOps
+#      Marketplace: https://marketplace.visualstudio.com/items?itemName=claswen.claude-code-base-task
+#
+#   2. Add your Anthropic API key as a secret pipeline variable:
+#      - Go to Pipeline → Edit → Variables → New Variable
+#      - Name:  ANTHROPIC_API_KEY
+#      - Value: sk-ant-...
+#      - Check "Keep this value secret"
+#
+#   3. (Optional) Set ADO_PAT if you want the agent to post inline PR comments
+#      via the ADO REST API (requires "Code (Read & Write)" scope on the PAT).
+# ─────────────────────────────────────────────────────────────────────────────
+
+trigger: none  # Only runs on PRs, not direct pushes
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+      - release/*
+  paths:
+    exclude:
+      - '**/*.md'        # Skip docs-only PRs
+      - '.vscode/**'
+      - '.claude/**'
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: ANTHROPIC_API_KEY
+    value: $(ANTHROPIC_API_KEY)   # Mapped from secret pipeline variable
+
+stages:
+  - stage: ClaudeReview
+    displayName: 'Claude AI code review'
+    jobs:
+      - job: PRReview
+        displayName: 'Run Claude PR reviewer'
+        timeoutInMinutes: 15
+
+        steps:
+          # ── Step 1: Checkout the PR branch ──────────────────────────────────
+          - checkout: self
+            fetchDepth: 0          # Full history needed for diff analysis
+            persistCredentials: true
+
+          # ── Step 2: Run Claude Code Base Task ───────────────────────────────
+          - task: ClaudeCodeBaseTask@1
+            displayName: 'Claude: PR code review'
+            inputs:
+              prompt: |
+                You are reviewing a pull request in this Azure DevOps repository.
+
+                PR details:
+                - PR ID:     $(System.PullRequest.PullRequestId)
+                - Source:    $(System.PullRequest.SourceBranch) → $(System.PullRequest.TargetBranch)
+                - Repo:      $(Build.Repository.Name)
+                - Project:   $(System.TeamProject)
+                - Org URL:   $(System.CollectionUri)
+
+                Steps:
+                1. Run `git diff origin/$(System.PullRequest.TargetBranch)...HEAD --name-only`
+                   to see which files changed.
+                2. Read each changed file and the diff to understand what was modified.
+                3. Review for bugs, security issues, missing tests, and code quality problems.
+                4. Write a structured review report to review-output.md with:
+                   - Overall verdict (APPROVED / NEEDS CHANGES / BLOCKED)
+                   - A table of issues found (file, line, severity, description)
+                   - Specific fix recommendations for each issue
+                5. Print the contents of review-output.md to stdout.
+
+                Be specific — reference exact file paths and line numbers.
+                Do not invent issues. If the code is clean, say so clearly.
+              allowedTools: 'Read,Glob,Grep,Bash'
+              outputFile: 'review-output.md'
+            env:
+              ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+
+          # ── Step 3: Publish review as pipeline artifact ──────────────────────
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish review report'
+            condition: always()
+            inputs:
+              targetPath: 'review-output.md'
+              artifact: 'claude-review-$(System.PullRequest.PullRequestId)'
+              publishLocation: pipeline
+
+          # ── Step 4: Post review as PR comment (requires ADO_PAT secret) ──────
+          - bash: |
+              if [ ! -f review-output.md ]; then
+                echo "No review output found — skipping PR comment."
+                exit 0
+              fi
+
+              REVIEW_BODY=$(cat review-output.md)
+              COMMENT_PAYLOAD=$(jq -n \
+                --arg body "$REVIEW_BODY" \
+                '{"content": $body, "parentCommentId": 0, "commentType": 1}')
+
+              curl -s -X POST \
+                "$(System.CollectionUri)$(System.TeamProject)/_apis/git/repositories/$(Build.Repository.Name)/pullRequests/$(System.PullRequest.PullRequestId)/threads?api-version=7.1" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Basic $(echo -n ":$(ADO_PAT)" | base64)" \
+                -d "{\"comments\": [$COMMENT_PAYLOAD], \"status\": 1}" \
+                -o /dev/null -w "HTTP %{http_code}\n"
+            displayName: 'Post review as PR comment'
+            condition: and(succeeded(), ne(variables['ADO_PAT'], ''))
+            env:
+              ADO_PAT: $(ADO_PAT)
+
+          # ── Step 5: Fail the pipeline if review found blockers ───────────────
+          - bash: |
+              if grep -q "Verdict.*BLOCKED" review-output.md 2>/dev/null; then
+                echo "##[error] Claude review found BLOCKER issues. PR cannot be merged."
+                exit 1
+              fi
+              if grep -q "Verdict.*NEEDS CHANGES" review-output.md 2>/dev/null; then
+                echo "##[warning] Claude review found issues that should be addressed."
+              fi
+            displayName: 'Check review verdict'
+            condition: always()

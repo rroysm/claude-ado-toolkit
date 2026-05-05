@@ -1,0 +1,15 @@
+node_modules/
+.env
+.env.*
+*.local
+
+# Claude Code internals
+.claude/worktrees/
+.claude/project-config.json
+
+# Generated — recreate with scripts/init.ps1
+CLAUDE.md
+
+# OS
+.DS_Store
+Thumbs.db

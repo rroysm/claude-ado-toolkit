@@ -1,0 +1,18 @@
+{
+  "adoOrg": "YourOrgName",
+  "appName": "YourAppName",
+  "techStack": "React frontend, Node.js backend",
+  "mainBranch": "main",
+  "projects": [
+    {
+      "name": "ProjectName",
+      "team": "Team Name",
+      "repo": "RepoName"
+    },
+    {
+      "name": "SecondProject",
+      "team": "Second Team",
+      "repo": "SecondRepo"
+    }
+  ]
+}

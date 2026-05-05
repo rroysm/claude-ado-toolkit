@@ -1,0 +1,11 @@
+{
+  "name": "claude-ado-toolkit",
+  "version": "1.0.0",
+  "description": "Claude Code AI toolkit for Azure DevOps — slash commands, agents, and BRD-to-PR pipeline",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "docx": "^9.6.1",
+    "pptxgenjs": "^3.12.0"
+  }
+}
