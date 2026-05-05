@@ -1,28 +1,44 @@
-# Claude Code ADO — AI-Powered Azure DevOps Toolkit
+# Claude Code ADO Toolkit
 
-A portable Claude Code setup that brings a complete AI-assisted Scrum workflow to any Azure DevOps project. Run one setup script and your team gets slash commands for every stage of the sprint — from BRD creation to retrospective deck — all wired into your ADO org via MCP.
+**Repo:** `Claude-ADO-Toolkit` · [dev.azure.com/NowOpticsIT/Claude-Test/_git/Claude-ADO-Toolkit](https://dev.azure.com/NowOpticsIT/Claude-Test/_git/Claude-ADO-Toolkit)
+
+A portable Claude Code setup that brings a complete AI-assisted Scrum workflow to any Azure DevOps project. Copy these files into your repo, run one setup script, and your whole team gets 9 slash commands and 6 specialist agents — covering every stage of the sprint from BRD creation to merged code.
+
+> **This is the toolkit source.** It contains no application code — only agents, slash commands, configuration, and the setup script. Add it to any ADO repo in under 10 minutes.
 
 ---
 
-## What this gives your team
+## What's included
+
+| Type | Count | What they do |
+|------|-------|-------------|
+| Slash commands | 9 | `/brd`, `/stories`, `/check`, `/refine`, `/implement`, `/sprint`, `/standup`, `/velocity`, `/retro` |
+| Specialist agents | 6 | BRD writer, BRD-to-stories, PR reviewer, pipeline doctor, story developer, story quality checker |
+| Setup wizard | 1 | `scripts/init.ps1` — generates `CLAUDE.md` for any ADO project in ~2 min |
+| CI pipeline | 1 | `azure-pipelines-claude-review.yml` — auto Claude PR review on every PR |
+| VS Code config | 1 | `.vscode/mcp.json` — ADO MCP server loads automatically when you open VS Code |
+
+---
+
+## Commands at a glance
 
 | Stage | Command | What Claude does |
 |-------|---------|-----------------|
-| Requirements | `/brd` | Interactive BRD via Q&A or uploaded docs. Asks for Figma designs and extracts UI requirements. Produces `.docx` + posts to ADO Feature. |
-| Story creation | `/stories AB#1234` | Decomposes BRD into right-sized user stories with AC, MoSCoW priority, and traceability matrix. Checks Figma for per-screen AC. |
-| Quality gate | `/check 1234` | Scores a single work item across 8 dimensions (RAG rubric). Enforces DoR checklist. Auto-generates AC if missing. |
+| Requirements | `/brd` | Interactive BRD via Q&A or uploaded docs. Analyses Figma designs. Produces `.docx` + posts to ADO Feature. |
+| Story creation | `/stories AB#1234` | Decomposes BRD into right-sized user stories with AC, MoSCoW priority, and traceability matrix. |
+| Quality gate | `/check 1234` | Scores a work item across 8 dimensions (RAG rubric). Enforces DoR. Auto-generates AC if missing. |
 | Sprint planning | `/refine` | Batch quality check on all sprint backlog stories. Flags over-capacity. Posts scores to ADO. |
-| Sprint board | `/sprint` | Scrum Master view — all items grouped by status and assignee. Flags blockers, stale items, overloaded members. |
+| Sprint board | `/sprint` | Scrum Master view — items by status and assignee. Flags blockers, stale items, overloaded members. |
 | Standup | `/standup` | Prep notes before standup. Teams-formatted summary after. |
-| Implementation | `/implement 1234` | Fetches story → quality gate → implementation plan → code + tests → state transitions → PR linked to work item. |
+| Implementation | `/implement 1234` | Fetches story → quality gate → plan → code + tests → state transitions → PR linked to work item. |
 | Velocity | `/velocity` | Multi-sprint trend report. Optional `.pptx` or `.pdf` export. |
-| Retrospective | `/retro` | Sprint retrospective PowerPoint (DROP/ADD/KEEP/IMPROVE). Offers to create ADO tasks from agreed action items. |
+| Retrospective | `/retro` | Sprint retrospective PowerPoint (DROP/ADD/KEEP/IMPROVE). Creates ADO tasks from action items. |
 
 ---
 
 ## End-to-End Delivery Pipeline
 
-Every feature follows this canonical 6-phase path. Claude enforces phase gates and always tells you what to run next.
+Every feature follows this 6-phase path. Claude enforces phase gates and always tells you what to run next — you never have to guess.
 
 ```
 Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 ──► Phase 5 ──► Phase 6
@@ -32,9 +48,9 @@ Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 ──► Phase 5 
 ```
 
 ### Phase 1 — BRD Creation (`/brd`)
-SM and PO run `/brd` against an Epic. Claude conducts interactive Q&A, analyses any Figma designs, and produces a `.docx` BRD posted to the ADO Epic.
+SM and PO run `/brd` against an Epic. Claude conducts interactive Q&A, analyses Figma designs if provided, and produces a `.docx` BRD posted to the ADO Epic.
 
-**Gate:** PO must verbally or in writing approve the BRD before stories can be created. Claude will not run `/stories` until you confirm.
+**Gate:** PO must approve the BRD before stories are created. Claude will not run `/stories` until you confirm.
 
 ### Phase 2 — Story Decomposition (`/stories`)
 SM runs `/stories AB#[epic]`. Claude reads the BRD, decomposes into 1–8pt stories with MoSCoW priority, creates them in ADO linked to the Epic, and posts a traceability matrix.
@@ -42,17 +58,17 @@ SM runs `/stories AB#[epic]`. Claude reads the BRD, decomposes into 1–8pt stor
 **Gate:** Stories must be assigned to a sprint before refinement.
 
 ### Phase 3 — Refinement & Quality Gate (`/refine` + `/check`)
-SM and tech leads run `/refine` to batch-score all sprint stories, then `/check AB#[id]` on each 🟡 Amber or 🔴 Red story until every story is 🟢 Green across all 8 dimensions.
+SM and tech leads run `/refine` to batch-score all sprint stories, then `/check AB#[id]` on each 🟡 Amber or 🔴 Red story until every story is 🟢 Green.
 
-**Gate:** No story moves to implementation until it scores 🟢 Green. IRIS stories require PO sign-off (Kaydi Garzon). VCS stories require BA review (Partha Sarathi Das for EHR features).
+**Gate:** No story moves to implementation until it scores 🟢 Green on all 8 dimensions.
 
 ### Phase 4 — Implementation (`/implement`)
 Developer runs `/implement AB#[id]`. Claude fetches the story, inspects the codebase, plans, writes code and tests, creates a branch, and opens a PR. Updates ADO state: To Do → In Progress → In Code Review.
 
-**Gate:** Story must score 🟢 on `/check`. Claude blocks on 🔴 Red unless `--skip-check` is used with a documented reason (hotfix or recorded OI-xxx blocker only).
+**Gate:** Story must score 🟢 on `/check`. Claude blocks on 🔴 Red unless `--skip-check` is used with a documented reason (hotfix or recorded external blocker only).
 
 ### Phase 5 — Code Review (AI + Human)
-`azure-pipelines-claude-review.yml` triggers the `ado-pr-reviewer` agent automatically on every PR. Claude posts inline comments on the diff. A human tech lead reviews and approves.
+`azure-pipelines-claude-review.yml` triggers the `ado-pr-reviewer` agent automatically on every PR. Claude posts inline comments. A human tech lead reviews and approves.
 
 **Gate:** ≥ 1 human approval required. Claude's review alone is never sufficient to merge.
 
@@ -70,7 +86,9 @@ Human merges the PR in ADO, then tells Claude **"merged"** in chat. Claude verif
 
 ---
 
-## Quick start
+## Adding this toolkit to your repo
+
+This is the recommended way to use the toolkit — copy the files into your existing ADO repo so every developer on the team gets the commands automatically when they clone.
 
 ### Prerequisites
 
@@ -78,89 +96,23 @@ Human merges the PR in ADO, then tells Claude **"merged"** in chat. Claude verif
 - [Claude Code CLI](https://claude.ai/code) — `npm install -g @anthropic/claude-code`
 - Access to your Azure DevOps organisation
 
-### Step 1 — Get the toolkit
-
-Clone or copy this repo into your project:
+### Step 1 — Clone the toolkit
 
 ```bash
-git clone <this-repo-url> .
+git clone https://NowOpticsIT@dev.azure.com/NowOpticsIT/Claude-Test/_git/Claude-ADO-Toolkit
+cd Claude-ADO-Toolkit
 ```
 
-> The essential files are `.claude/`, `CLAUDE.template.md`, `scripts/init.ps1`, `.vscode/mcp.json`, and `azure-pipelines-claude-review.yml`. You can copy these manually into an existing repo if preferred — see [Deploying to another ADO repo](#deploying-to-another-ado-repo) below.
-
-### Step 2 — Run the setup script
+### Step 2 — Copy toolkit files into your target repo
 
 ```powershell
-PowerShell -ExecutionPolicy Bypass -File .\scripts\init.ps1
-```
+$target = "C:\path\to\your\project-repo"
 
-The script asks eight questions and generates a ready-to-use `CLAUDE.md`:
-
-| Question | Example |
-|----------|---------|
-| ADO organisation name | `NowOpticsIT` |
-| Primary project name | `IRIS` |
-| Primary team name | `IRIS Team` |
-| Primary repo name | `Iris` |
-| Add a second project? | `Y` / `N` |
-| Application name | `IRIS` |
-| Tech stack | `React frontend, Node.js backend` |
-| Main branch name | `main` |
-
-It also optionally sets `git remote origin` to your ADO repo and saves answers to `.claude/project-config.json` for re-use.
-
-### Step 3 — Register the ADO MCP server
-
-Run **once per developer machine**:
-
-```bash
-claude mcp add azure-devops -- npx -y @azure-devops/mcp YOUR_ORG_NAME
-```
-
-### Step 4 — Fill in your team
-
-Open `CLAUDE.md` → **Team structure** section. Add every team member's name, role, and sub-team. Claude uses this for standup reports, capacity calculations, reviewer assignment, and retrospective action items.
-
-### Step 5 — Configure your Definition of Ready
-
-Open `CLAUDE.md` → **Definition of Ready** section. The defaults are:
-
-1. **PO sign-off** — `Reviewed` field = "Reviewed" and `Reviewed By` set to your PO's name *(configure per project)*
-2. **Design assets linked** — Figma link or mockup required for UI stories (backend stories exempt)
-3. **No open questions** — blocks on "TBD", "?", or "pending" in description or AC
-4. **State gate** — "Waiting for Requirements" state = automatically Not Ready
-
-Update criterion 1 with your PO's name and the correct ADO field for your team.
-
-### Step 6 — Wire up the CI pipeline
-
-In your ADO project: **Pipelines → New pipeline** → point at `azure-pipelines-claude-review.yml`. Name it `Claude PR Review`. It triggers automatically on every PR — no further config needed.
-
-### Step 7 — Open in VS Code and push
-
-```bash
-# VS Code loads .vscode/mcp.json automatically — prompts for org name on first use
-code .
-
-# Push to your ADO repo
-git push -u origin main
-```
-
----
-
-## Deploying to another ADO repo
-
-To bring this toolkit to your IRIS, VCS, or any other ADO repo, copy the AI tooling files and regenerate `CLAUDE.md` for that project. Your application code in `src/` is untouched.
-
-### Step 1 — Copy the AI tooling files
-
-```powershell
-$target = "C:\path\to\your\iris-or-vcs-repo"
-
-# Agent definitions and slash commands
+# Agents and slash commands
 Copy-Item -Path ".\.claude\agents"        -Destination "$target\.claude\agents"   -Recurse -Force
 Copy-Item -Path ".\.claude\commands"      -Destination "$target\.claude\commands" -Recurse -Force
 Copy-Item -Path ".\.claude\settings.json" -Destination "$target\.claude\settings.json" -Force
+Copy-Item -Path ".\.claude\project-config.example.json" -Destination "$target\.claude\project-config.example.json" -Force
 
 # VS Code MCP config
 New-Item -ItemType Directory -Force "$target\.vscode" | Out-Null
@@ -175,55 +127,83 @@ Copy-Item -Path ".\CLAUDE.template.md" -Destination "$target\CLAUDE.template.md"
 Copy-Item -Path ".\azure-pipelines-claude-review.yml" -Destination "$target\azure-pipelines-claude-review.yml" -Force
 ```
 
-### Step 2 — Generate CLAUDE.md for the target project
+### Step 3 — Run the setup wizard
 
 ```powershell
 cd $target
 PowerShell -ExecutionPolicy Bypass -File .\scripts\init.ps1
 ```
 
-Enter the target project's ADO org, project name, team name, and repo name. The wizard pre-fills from `project-config.json` if it finds one.
+The wizard asks eight questions and generates `CLAUDE.md` — the project brain that controls all slash command behaviour:
 
-### Step 3 — Add required npm packages
+| Question | Example answer |
+|----------|---------------|
+| ADO organisation name | `NowOpticsIT` |
+| Project name | `IRIS` |
+| Team name | `IRIS Team` |
+| Repo name | `Iris` |
+| Add a second project? | `Y` / `N` |
+| Application name | `IRIS` |
+| Tech stack | `React frontend, Node.js backend` |
+| Main branch name | `main` |
 
-Check if the target repo's `package.json` already includes these. If not, add them:
+Answers are saved to `.claude/project-config.json` — press Enter next time to keep them.
+
+### Step 4 — Add required npm packages
+
+Check if your repo's `package.json` already has these. If not, add them to `dependencies`:
 
 ```json
-"docx": "^8.5.0",
+"docx": "^9.6.1",
 "pptxgenjs": "^3.12.0"
 ```
 
 Then run `npm install` once.
 
-### Step 4 — Register MCP server (once per developer machine)
+### Step 5 — Fill in your team
+
+Open `CLAUDE.md` → **Team structure** section. Add every team member's name, role, and sub-team. Claude uses this for standup reports, capacity calculations, reviewer assignment, and retro action items.
+
+### Step 6 — Configure your Definition of Ready
+
+Open `CLAUDE.md` → **Definition of Ready** section. Update:
+1. Your PO's name and the ADO field used for sign-off (per project)
+2. Any additional DoR criteria your team uses
+
+### Step 7 — Wire up the CI pipeline
+
+In your ADO project: **Pipelines → New pipeline** → select the repo → choose `azure-pipelines-claude-review.yml` → name it `Claude PR Review` → save. Triggers automatically on every PR.
+
+### Step 8 — Register the ADO MCP server (once per developer machine)
+
+Each team member runs this **once**:
 
 ```bash
 claude mcp add azure-devops -- npx -y @azure-devops/mcp YOUR_ORG_NAME
 ```
 
-Each developer runs this once. Authentication uses their Microsoft Entra (Azure AD) account — the same login as `dev.azure.com`.
+Authentication uses their Microsoft Entra (Azure AD) account — same login as `dev.azure.com`. No PAT needed.
 
-### Step 5 — Create the CI pipeline in the target ADO project
-
-**Pipelines → New pipeline** → select the repo → choose `azure-pipelines-claude-review.yml` → name it `Claude PR Review` → save. Triggers automatically on every PR.
-
-### Step 6 — Commit and push
+### Step 9 — Commit and push
 
 ```bash
-git add .claude/ .vscode/mcp.json scripts/ CLAUDE.md CLAUDE.template.md azure-pipelines-claude-review.yml
-git commit -m "chore: Add Claude Code AI tooling — slash commands, agents, CLAUDE.md"
+git add .claude/ .vscode/ scripts/ CLAUDE.md CLAUDE.template.md azure-pipelines-claude-review.yml
+git commit -m "chore: Add Claude Code AI toolkit — slash commands, agents, CLAUDE.md"
 git push
 ```
 
-### What each team member needs (one-time)
+From this point on, every developer who clones the repo gets all 9 slash commands and 6 agents automatically — no per-machine setup beyond the one-time MCP registration.
 
-| What | Command | Time |
+---
+
+## What each team member needs (one-time setup)
+
+| Step | Command | Time |
 |------|---------|------|
 | Install Claude Code CLI | `npm install -g @anthropic/claude-code` | 2 min |
 | Register ADO MCP server | `claude mcp add azure-devops -- npx -y @azure-devops/mcp YOUR_ORG` | 30 sec |
-| Open repo in Claude Code | `cd <repo> && claude` | instant |
-
-Once the files are committed, every developer who clones the repo gets all slash commands and agents automatically — no per-machine file copying.
+| Open repo in Claude Code | `cd your-repo && claude` | instant |
+| VS Code (optional) | Open repo → Copilot Agent mode → enable ADO tools | 2 min |
 
 ---
 
@@ -233,20 +213,21 @@ All commands require `--project "ProjectName" --team "TeamName"` flags.
 
 ### `/brd` — Create a Business Requirements Document
 
-```text
+```
 /brd
-/brd AB#1234   ← link BRD to an existing ADO Feature or Epic
+/brd AB#1234
 ```
 
 - Gathers requirements via interactive Q&A or from uploaded docs (meeting notes, emails, specs)
-- **Always asks for Figma designs** — accepts a Figma link or screenshots. Extracts screen names, UI components, field labels, navigation flows, and error states.
+- Always asks for Figma designs — accepts a Figma link or screenshots
+- Extracts screen names, UI components, field labels, navigation flows, and error states
 - Produces a `.docx` BRD with 12 sections (FR/NFR numbered, Given/When/Then AC, user journeys)
 - Posts a summary comment to the ADO Feature work item
 - **Next step:** `/stories AB#[epic]` after PO approves scope
 
 ### `/stories` — Decompose BRD into user stories
 
-```text
+```
 /stories
 /stories AB#1234
 /stories AB#1234 --sprint "Sprint 45"
@@ -254,16 +235,15 @@ All commands require `--project "ProjectName" --team "TeamName"` flags.
 ```
 
 - Loads BRD from file, ADO work item, or current session
-- **Checks for Figma designs** — maps screens to BRD requirements, adds `UI reference:` lines to stories, flags gaps
-- Decomposes into right-sized stories (1–8pt, INVEST principles)
-- Shows full story list for review before creating anything in ADO
-- Creates work items tagged `claude-generated`, `brd-derived`, linked to parent Feature
-- Posts a traceability matrix (FR-ID → Story ID) as a comment on the Feature
+- Maps Figma screens to BRD requirements — adds `UI reference:` lines to stories, flags gaps
+- Decomposes into right-sized stories (1–8pt, INVEST principles), MoSCoW prioritisation
+- Shows full story list for confirmation before creating anything in ADO
+- Creates work items linked to parent Feature, posts a traceability matrix (FR-ID → Story ID)
 - **Next step:** `/refine` after stories are assigned to a sprint
 
 ### `/check` — Quality-gate a single work item
 
-```text
+```
 /check 1234 --project "MyProject" --team "My Team"
 /check 1234 --project "MyProject" --team "My Team" --dry-run
 ```
@@ -272,84 +252,84 @@ Scores the story across 8 dimensions:
 
 | # | Dimension | Green criteria |
 |---|-----------|---------------|
-| D1 | Acceptance criteria | 3+ testable Given/When/Then |
+| D1 | Acceptance criteria | 3+ testable Given/When/Then statements |
 | D2 | Story points | On team scale (1, 2, 3, 5, 8) |
-| D3 | Description | Clear "As a / I want / So that" |
+| D3 | Description | Clear "As a / I want / So that" format |
 | D4 | Linked tasks | 2+ child tasks meaningfully titled |
 | D5 | Linked test cases | 1+ test cases linked |
 | D6 | Dependencies noted | External dependencies explicit |
-| D7 | Definition of Ready | All DoR criteria met (see CLAUDE.md) |
+| D7 | Definition of Ready | All DoR criteria met (configured in CLAUDE.md) |
 | D8 | Story size | 1–8pt, deliverable in one sprint |
 
-**Classification:** READY (7–8 green, no red) · NEEDS WORK (4–6 green or 1–2 red) · NOT READY (3+ red)
+**READY** (7–8 green, no red) · **NEEDS WORK** (4–6 green or 1–2 red) · **NOT READY** (3+ red)
 
-Auto-generates suggested AC in Given/When/Then format if D1 = Red. Posts report as ADO comment.
+Auto-generates suggested AC in Given/When/Then format when D1 = Red. Posts report as ADO comment.
 
 **Next step:** `/implement AB#[id]` when 🟢 Green
 
 ### `/refine` — Batch sprint quality check
 
-```text
+```
 /refine --project "MyProject" --team "My Team"
 /refine --project "MyProject" --team "My Team" --sprint "Sprint 15"
-/refine --project "MyProject" --team "My Team" --current
 /refine --project "MyProject" --team "My Team" --post
 /refine --project "MyProject" --team "My Team" --dry-run
-/refine --project "MyProject" --team "My Team" --ratio 6   ← pre-AI baseline
+/refine --project "MyProject" --team "My Team" --ratio 6
 ```
 
-Checks all User Stories, Enhancements, and Bugs in the sprint backlog. Fetches team capacity from ADO. Flags over-capacity with drop candidates. Posts per-story scores to ADO with `--post`.
+Scores all User Stories, Enhancements, and Bugs in the sprint backlog. Fetches team capacity from ADO. Flags over-capacity with suggested drop candidates. Use `--post` to write scores as ADO comments. Use `--ratio 6` to revert to the pre-AI capacity baseline.
 
 **Next step:** `/check AB#[id]` for each 🟡 Amber or 🔴 Red story
 
 ### `/implement` — Full story implementation
 
-```text
+```
 /implement 1234 --project "MyProject" --team "My Team"
-/implement 1234 --project "MyProject" --team "My Team" --branch "feature/custom-name"
+/implement 1234 --project "MyProject" --team "My Team" --branch "feature/my-branch"
 /implement 1234 --project "MyProject" --team "My Team" --skip-check
 ```
 
-Full pipeline, in order:
+Full pipeline in order:
 
 1. Fetch work item from ADO (User Story, Bug, Enhancement — not Tasks)
-2. **Dependency check** — inspects predecessor links; warns and pauses if a blocking story is not yet complete
-3. **Quality gate** — runs `/check` rubric; blocks if NOT READY, warns if NEEDS WORK
-4. Inspect codebase patterns (folder structure, naming, test setup, ESLint)
-5. Show implementation plan — waits for your confirmation
-6. **Set story + child tasks → In Progress** before any code is written
-7. Create `feature/[id]-short-title` or `bugfix/[id]-short-title` branch from `main`
+2. **Dependency check** — warns and pauses if a blocking story is not yet complete
+3. **Quality gate** — blocks if NOT READY, warns if NEEDS WORK
+4. Inspect codebase patterns (folder structure, naming, test setup, linting)
+5. Show implementation plan — waits for your confirmation before writing any code
+6. **Set story + child tasks → In Progress**
+7. Create `feature/[id]-title` or `bugfix/[id]-title` branch from main
 8. Write code following standards in `CLAUDE.md`
-9. **Run tests** — `npm test -- --watchAll=false --coverage`. Blocks PR if tests fail, regressions exist, or zero tests are found
+9. **Run tests** — `npm test -- --watchAll=false --coverage`. Blocks PR on any failure or regression
 10. Update documentation if needed
 11. **Set story + child tasks → In Code Review**
-12. Open PR in ADO linked to work item
+12. Open PR in ADO linked to the work item
 
 **Next step:** Assign Tech Lead as reviewer. Say "merged" after approval and merge.
 
 ### `/sprint` — Scrum Master board
 
-```text
+```
 /sprint --project "MyProject" --team "My Team"
 /sprint --project "MyProject" --team "My Team" --all
 ```
 
-All sprint items grouped by status then by assignee. Flags: blockers, stale items (3+ days no update), unassigned items, overloaded members, oversized stories.
+All sprint items grouped by status then assignee. Flags: blockers, stale items (3+ days), unassigned items, overloaded members, oversized stories.
 
 ### `/standup` — Daily standup
 
-```text
+```
 /standup --project "MyProject" --team "My Team"
 /standup --project "MyProject" --team "My Team" --summary
 /standup --project "MyProject" --team "My Team" --post
 /standup --project "MyProject" --team "My Team" --notes "Alice is on leave today"
 ```
 
-Default: prep notes before standup (per-person yesterday/today/blockers). `--summary` / `--post`: Teams-formatted summary after standup.
+Default: per-person prep notes before standup (yesterday / today / blockers).  
+`--summary` / `--post`: Teams-formatted summary after standup. Messages are never sent without `--post`.
 
 ### `/velocity` — Sprint velocity trends
 
-```text
+```
 /velocity --project "MyProject" --team "My Team"
 /velocity --project "MyProject" --team "My Team" --sprints 10
 /velocity --project "MyProject" --team "My Team" --export ppt
@@ -360,7 +340,7 @@ Committed vs completed, completion rate %, bug trend, carry-over trend across la
 
 ### `/retro` — Sprint retrospective deck
 
-```text
+```
 /retro --project "MyProject" --team "My Team"
 /retro --project "MyProject" --team "My Team" --sprint "Sprint 14"
 /retro --project "MyProject" --team "My Team" --notes "Team felt overloaded"
@@ -372,22 +352,20 @@ Generates a PowerPoint (DROP/ADD/KEEP/IMPROVE) seeded from ADO data. After deliv
 
 ## Post-PR lifecycle
 
-After a PR is raised, Claude tracks the review-to-merge cycle.
+After a PR is raised (Phase 4), Claude tracks the review-to-merge cycle.
 
-### Reviewer assignment (default rules)
+### Reviewer assignment
 
 Claude suggests the reviewer immediately after raising the PR:
 
 | PR type | Default reviewer |
 |---------|-----------------|
-| Frontend (React, CSS, HTML) | Frontend Lead |
-| Backend (Node.js, routes, services) | Backend Lead |
+| Frontend (React, CSS, HTML) | Frontend Lead (configure in CLAUDE.md) |
+| Backend (Node.js, routes, services) | Backend Lead (configure in CLAUDE.md) |
 | Full-stack / cross-cutting | Scrum Master |
 | QA / test-only | QA Lead |
 
 ### Merge conditions
-
-All of the following must be true before merging:
 
 | Condition | Who verifies |
 |-----------|-------------|
@@ -399,101 +377,80 @@ All of the following must be true before merging:
 
 ### Post-merge sequence
 
-Tell Claude **"merged"** in chat after the human merges the PR:
+Tell Claude **"merged"** in chat after the human merges:
 
-1. **AC verification** — Claude re-reads every acceptance criterion and confirms coverage. Raises any uncovered AC before closing.
-2. **Story + children → Done** — Story and all linked Tasks/Subtasks set to Done.
-3. **Sibling check** — If all sibling stories under the parent Epic are now Done, Claude asks: *"Shall I close the Epic?"* and waits for your explicit yes.
-4. **Regression reminder** — Prompts you to run the full test suite on `main`.
-5. **Next story** — Suggests the next highest-priority story in the sprint.
+1. **AC verification** — confirms every acceptance criterion is covered before closing
+2. **Story + children → Done** — story and all linked Tasks/Subtasks set to Done
+3. **Sibling check** — if all sibling stories under the Epic are Done, asks *"Shall I close the Epic?"*
+4. **Regression reminder** — prompts you to run the full test suite on `main`
+5. **Next story** — suggests the next highest-priority story in the sprint
 
 ---
 
 ## Specialist agents (auto-invoked)
 
-You don't call these directly — Claude invokes them automatically when the task matches.
+Claude invokes these automatically — you never call them directly.
 
 | Agent | Auto-triggers when... |
 |-------|----------------------|
-| `ado-pr-reviewer` | Asked to review a PR or check code changes. Handles large diffs by triaging risk tiers — security/auth reviewed first, generated files skipped. |
-| `ado-pipeline-doctor` | A pipeline fails or CI error needs diagnosing. Classifies failure type and outputs a paste-ready fix. |
-| `ado-story-developer` | Implementing a user story end-to-end. Runs the same test gate and state transitions as `/implement`. |
+| `ado-pr-reviewer` | Asked to review a PR or check code changes. Triages by risk: security/auth first, generated files skipped. |
+| `ado-pipeline-doctor` | A pipeline fails or CI error needs diagnosing. Outputs a paste-ready fix. |
+| `ado-story-developer` | Implementing a user story end-to-end. Same test gate and state transitions as `/implement`. |
 | `ado-story-quality-checker` | Checking story quality before development. Same 8-dimension rubric as `/check`. |
 | `ado-brd-writer` | Creating or drafting a BRD. Runs the Figma check as part of requirements elicitation. |
 | `ado-brd-to-stories` | Decomposing a BRD into ADO user stories. |
 
 ---
 
-## Quality enforcement built in
-
-### Definition of Ready (D7 in `/check` and `/refine`)
-
-D7 enforces your team's actual DoR defined in `CLAUDE.md` — not just a tag:
-
-- **PO sign-off** — configurable per project (ADO `Reviewed` field + `Reviewed By` field)
-- **Design assets linked** — Figma link or mockup required for UI stories
-- **No open questions** — blocks on "TBD", "?", "pending" in description or AC
-- **State gate** — "Waiting for Requirements" state = Red, regardless of other criteria
+## Quality enforcement
 
 ### Test gate in `/implement`
 
 Claude runs `npm test -- --watchAll=false --coverage` and **blocks PR creation** if:
 
 - Any test fails (fix the implementation — never rewrite tests to mask a bug)
-- Test environment is broken (missing env vars, missing modules) — stops and asks you to fix
+- Test environment is broken (missing env vars, missing modules) — stops and asks you to fix it
 - Zero tests are found (writes tests first, then re-runs before continuing)
-- Any previously-passing test now fails (regression anywhere = blocker)
+- Any previously-passing test now fails (regression anywhere = blocker, not just new test files)
 
 ### ADO state transitions
 
-`/implement` handles state transitions automatically:
+`/implement` handles every state transition — you never need to update ADO manually:
 
 | Event | Story state | Child task states |
 |-------|-------------|------------------|
-| Plan confirmed → coding starts | In Progress | In Progress |
+| Plan confirmed, coding starts | In Progress | In Progress |
 | PR opened | In Code Review | In Code Review |
-| "merged" confirmed + ACs verified | Done | Done |
+| "merged" + ACs verified | Done | Done |
 
-### Blocked story handling (OI-xxx pattern)
+### Blocked story handling
 
 When a story depends on an unresolved external item:
 
-1. Claude documents the blocker in the work item: `⚠️ BLOCKED — [OI-xxx]: [description]. Owner: [name].`
-2. Story state is set to **On Hold** — not In Progress, not Waiting for Requirements.
-3. During `/refine`, blocked stories are flagged and excluded from capacity calculations.
-4. Claude will not run `/implement` on a blocked story until you explicitly confirm the blocker is resolved.
-
----
-
-## Direct work item editing
-
-Update any ADO field from chat — no need to go to the web UI:
-
-> "Update the acceptance criteria on ticket 1234"
-> "Change the story points on AB#5678 to 5"
-> "Assign ticket 1234 to [team member name]"
-
-Claude shows the before/after and asks for confirmation before writing.
+1. Claude documents the blocker: `⚠️ BLOCKED — [OI-xxx]: [description]. Owner: [name].`
+2. Story state is set to **On Hold**
+3. During `/refine`, blocked stories are flagged and excluded from capacity calculations
+4. Claude will not run `/implement` on a blocked story until you confirm the blocker is resolved
 
 ---
 
 ## Figma design integration
 
-Both `/brd` and `/stories` ask upfront:
+Both `/brd` and `/stories` ask upfront: *"Is there a Figma design for this feature?"*
 
-> "Is there a Figma design for this feature?"
+| Input | What Claude does |
+|-------|----------------|
+| Figma link | Fetches and analyses the design (requires public link or auth) |
+| Screenshots | Analyses each screen visually |
+| No design | Notes "UI/UX design: Not yet created" and continues |
 
-- **Figma link provided** — Claude fetches and analyses the design. Note: most Figma links require authentication; if the fetch fails, export screens as PNG/JPG instead.
-- **Screenshots provided** — Claude analyses each screen visually.
-- **No design** — noted as "UI/UX design: Not yet created" and the workflow continues.
-
-What Claude extracts: screen names, UI components, field labels, navigation flows, empty/error states, developer annotations. These feed directly into BRD functional requirements and story acceptance criteria.
+Claude extracts: screen names, component labels, field validation, navigation flows, empty/error states, developer annotations. These feed directly into BRD requirements and story acceptance criteria. Gaps between screens and requirements are flagged before stories are created.
 
 ---
 
 ## Story point scale (AI-assisted)
 
-Estimates reflect **human effort** (review, guidance, validation) — not raw coding time:
+Estimates reflect **human effort** — not raw coding time. Claude Code handles approximately one-third of coding effort:
 
 | Points | Human hours | When to use |
 |--------|-------------|-------------|
@@ -502,7 +459,7 @@ Estimates reflect **human effort** (review, guidance, validation) — not raw co
 | 3pt | ~6h | Moderate — clear requirements, known patterns |
 | 5pt | ~16h | Complex — multiple files, design decisions |
 | 8pt | ~30h | Large — cross-cutting, architectural thought (max per sprint) |
-| 13pt | must split | Exceeds sprint capacity even with AI — split first |
+| 13pt | must split | Exceeds sprint capacity even with AI |
 
 **Capacity formula:** `team members × days available × 6h ÷ 4 = sprint capacity (pts)`
 
@@ -512,8 +469,8 @@ Use `--ratio 6` on `/refine` or `/check` to revert to the pre-AI baseline.
 
 ## File structure
 
-```text
-.
+```
+claude-ado-toolkit/
 ├── .claude/
 │   ├── agents/
 │   │   ├── ado-brd-writer.md             # BRD creation agent
@@ -532,34 +489,38 @@ Use `--ratio 6` on `/refine` or `/check` to revert to the pre-AI baseline.
 │   │   ├── standup.md                    # /standup command
 │   │   ├── stories.md                    # /stories command
 │   │   └── velocity.md                   # /velocity command
-│   ├── settings.json                     # Project-level MCP tool permissions
-│   └── project-config.example.json      # Config schema reference
+│   ├── settings.json                     # MCP tool permissions
+│   └── project-config.example.json      # Config schema — copy to project-config.json
 ├── .vscode/
-│   └── mcp.json                          # ADO MCP server config (auto-loads in VS Code)
+│   └── mcp.json                          # ADO MCP server — auto-loads in VS Code
 ├── scripts/
 │   └── init.ps1                          # Setup wizard — generates CLAUDE.md
-├── azure-pipelines-claude-review.yml     # CI pipeline — triggers Claude PR review on every PR
-├── CLAUDE.md                             # Generated project config (edit to customise)
-└── CLAUDE.template.md                    # Template source — edit here, then re-run init.ps1
+├── azure-pipelines-claude-review.yml     # CI pipeline — auto Claude PR review on every PR
+├── CLAUDE.template.md                    # Project config template — source for init.ps1
+├── package.json                          # Required packages: docx, pptxgenjs
+├── .gitignore
+└── README.md
+
+# Not in this repo — generated in your project repo by init.ps1:
+# CLAUDE.md                               # Project brain (gitignored here, lives in your repo)
 ```
 
 ---
 
-## Customising for your team
+## Customising after setup
 
-All behaviour is controlled by `CLAUDE.md`. Key sections to update:
+All slash command behaviour is controlled by `CLAUDE.md` in your project repo. Key sections to update:
 
 | Section | What to update |
 |---------|---------------|
-| **End-to-End Delivery Pipeline** | Adjust phase owners and entry conditions for your process |
-| **Project overview** | Your project names, PO and SM names |
-| **Azure DevOps context** | Your org URL, project names, repo remote URLs |
+| **End-to-End Delivery Pipeline** | Phase owners, entry conditions, gate criteria |
 | **Team structure** | Full roster with names, roles, sub-teams |
-| **Definition of Ready** | PO sign-off field and person (per project), any additional criteria |
-| **Coding standards** | Tech stack, naming conventions, PR rules |
-| **Story point estimation model** | Adjust if your AI uplift ratio differs |
+| **Definition of Ready** | PO sign-off field and person, additional criteria |
+| **Azure DevOps context** | Org URL, project names, repo remote URLs |
+| **Coding standards** | Tech stack, naming conventions, PR size limits |
+| **Story point estimation model** | Adjust capacity ratio if your AI uplift differs |
 
-To update defaults across **all future projects**, edit `CLAUDE.template.md` and re-run `scripts/init.ps1`.
+To change defaults for **all future projects**, edit `CLAUDE.template.md` in this toolkit repo and re-run `scripts/init.ps1`.
 
 ---
 
@@ -567,19 +528,16 @@ To update defaults across **all future projects**, edit `CLAUDE.template.md` and
 
 ### VS Code (recommended)
 
-`.vscode/mcp.json` loads the ADO MCP server automatically. On first use it prompts for your org name and authenticates via Microsoft Entra (Azure AD) — the same login as `dev.azure.com`. No per-machine config needed for teammates.
+`.vscode/mcp.json` loads the ADO MCP server automatically when you open the repo. On first use it prompts for your org name and authenticates via Microsoft Entra (Azure AD) — same login as `dev.azure.com`.
 
 ### Claude Code CLI — Personal Access Token
 
 ```bash
-# Set before running claude
 export ADO_MCP_AUTH_TOKEN="your-personal-access-token"
-
-# Register with PAT auth
 claude mcp add azure-devops -- npx -y @azure-devops/mcp YOUR_ORG --authentication envvar
 ```
 
-Generate a PAT at: `https://dev.azure.com/YOUR_ORG/_usersSettings/tokens`
+Generate a PAT at `https://dev.azure.com/YOUR_ORG/_usersSettings/tokens`
 
 Required scopes: **Code** (Read & Write) · **Work Items** (Read & Write) · **Build** (Read)
 
@@ -587,15 +545,15 @@ Required scopes: **Code** (Read & Write) · **Work Items** (Read & Write) · **B
 
 ## What Claude will not do
 
-These are hard guardrails that cannot be overridden:
+Hard guardrails — these cannot be overridden by any instruction:
 
 - **Never commit directly to `main` or `release/*`** — always creates a branch and PR
-- **Never merge or approve a PR** — human approval always required
-- **Never close an Epic** without your explicit confirmation — even if all child stories are Done
+- **Never merge or approve a PR** — human approval is always required
+- **Never close an Epic** without your explicit confirmation, even if all child stories are Done
 - **Never mark a story Done** without you saying "merged" and AC verification passing
-- **Never run `/implement` on a 🔴 Red story** unless `--skip-check` is used with a documented reason
+- **Never run `/implement` on a 🔴 Red story** without `--skip-check` and a documented reason
 - **Never skip CI failures silently** — always surfaces the failure and stops
-- **Never send standup messages or Teams posts** without explicit `--post` flag
+- **Never send standup or Teams messages** without the explicit `--post` flag
 - **Never store secrets or tokens in code** — environment variables only
 
 ---
@@ -604,17 +562,17 @@ These are hard guardrails that cannot be overridden:
 
 ```bash
 # Check the current sprint board
-/sprint --project "MyProject" --team "My Team"
+/sprint --project "YourProject" --team "Your Team"
 
 # Batch quality-check all sprint backlog stories
-/refine --project "MyProject" --team "My Team"
+/refine --project "YourProject" --team "Your Team"
 
 # Deep-dive quality check on a single story
-/check 1234 --project "MyProject" --team "My Team"
+/check 1234 --project "YourProject" --team "Your Team"
 
 # Implement a story end-to-end
-/implement 1234 --project "MyProject" --team "My Team"
+/implement 1234 --project "YourProject" --team "Your Team"
 
 # Create a BRD for an Epic
-/brd AB#1234 --project "MyProject" --team "My Team"
+/brd AB#1234 --project "YourProject" --team "Your Team"
 ```
