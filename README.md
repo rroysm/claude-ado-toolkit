@@ -30,7 +30,7 @@ A portable Claude Code setup that brings a complete AI-assisted Scrum workflow t
 | Sprint planning | `/refine` | Batch quality check on all sprint backlog stories. Flags over-capacity. Posts scores to ADO. |
 | Sprint board | `/sprint` | Scrum Master view — items by status and assignee. Flags blockers, stale items, overloaded members. |
 | Standup | `/standup` | Prep notes before standup. Teams-formatted summary after. |
-| Implementation | `/implement 1234` | Fetches story → quality gate → plan → code + tests → state transitions → PR linked to work item. |
+| Implementation | `/implement 1234` | Fetches story → classifies work type (new/modify/bugfix/refactor/full-stack) → explores codebase → code + tests → state transitions → PR linked to work item. |
 | Velocity | `/velocity` | Multi-sprint trend report. Optional `.pptx` or `.pdf` export. |
 | Retrospective | `/retro` | Sprint retrospective PowerPoint (DROP/ADD/KEEP/IMPROVE). Creates ADO tasks from action items. |
 
@@ -169,6 +169,18 @@ Open `CLAUDE.md` → **Team structure** section. Add every team member's name, r
 Open `CLAUDE.md` → **Definition of Ready** section. Update:
 1. Your PO's name and the ADO field used for sign-off (per project)
 2. Any additional DoR criteria your team uses
+
+### Step 7 — Fill in branching strategy and codebase structure (leads only)
+
+`CLAUDE.md` contains two placeholder sections that control how `/implement` behaves in your live codebase. They must be completed before developers run the command.
+
+**Branching strategy** — describe your branch naming rules, merge target, and merge strategy in chat, then say:
+> "Update CLAUDE.md branching strategy for [project]"
+
+**Codebase structure** — share your folder tree or describe your stack (component library, state management, ORM, auth pattern), then say:
+> "Update CLAUDE.md codebase structure for [project]"
+
+Claude rewrites those sections accurately. Commit the result. These sections are intentionally left as placeholders in the template — only your team knows the real answers.
 
 ### Step 7 — Wire up the CI pipeline
 
@@ -387,6 +399,33 @@ Tell Claude **"merged"** in chat after the human merges:
 
 ---
 
+## Work type classification
+
+Every story or bug that reaches `/implement` is **automatically classified** by Claude before any code is written. No manual flag required — Claude reads the work item title, description, and AC to determine the type, then follows the matching playbook.
+
+| Work type | Layer | What Claude does |
+|-----------|-------|-----------------|
+| New frontend page (greenfield) | Frontend | Reuses existing route file and layout. Fetches Figma design if linked. Scaffolds: route → component → custom hook → tests. Never invents new file/folder patterns. |
+| Modify existing frontend page/component | Frontend | Reads the full file before writing anything. Traces all importers. Makes the smallest change that satisfies the AC — no unrelated cleanup. |
+| New backend API endpoint | Backend | Reads existing routes to understand the established pattern. Follows the same service-layer and repository pattern already in the codebase. Documents endpoint in PR description. |
+| Modify existing backend service/route | Backend | Reads route + service + repo files. Greps all callers to check for side-effects. Flags breaking vs non-breaking API changes in the PR. |
+| Bug fix (frontend or backend) | Either | Reproduces first — finds the exact file and line. Writes the minimal fix only. Adds a regression test. PR includes root cause, fix, and regression test description. |
+| Code quality / refactor | Either | Strictly scoped to what the story says. No observable behaviour changes. Full test suite runs before and after. |
+| Full-stack story | Both | Backend first — understands the API contract, then implements frontend. Documents the API shape before starting frontend work. Single branch and PR unless the story explicitly splits them. |
+
+### Codebase exploration protocol
+
+For any modification, bug fix, or full-stack work, Claude runs this 6-step sequence before writing any code:
+
+1. **Locate** — find the exact file containing the component, route, or service to change
+2. **Read fully** — never make changes based on a partial read
+3. **Trace dependencies** — grep all importers and callers; understand blast radius
+4. **Find tests** — locate the test file(s) and understand what's already covered
+5. **Check types** — find TypeScript interfaces or PropTypes the file depends on
+6. **Note env vars** — identify all `process.env` reads; never hardcode them in changes
+
+---
+
 ## Specialist agents (auto-invoked)
 
 Claude invokes these automatically — you never call them directly.
@@ -395,7 +434,7 @@ Claude invokes these automatically — you never call them directly.
 |-------|----------------------|
 | `ado-pr-reviewer` | Asked to review a PR or check code changes. Triages by risk: security/auth first, generated files skipped. |
 | `ado-pipeline-doctor` | A pipeline fails or CI error needs diagnosing. Outputs a paste-ready fix. |
-| `ado-story-developer` | Implementing a user story end-to-end. Same test gate and state transitions as `/implement`. |
+| `ado-story-developer` | Implementing a user story end-to-end. Classifies work type, runs exploration protocol, same test gate and state transitions as `/implement`. |
 | `ado-story-quality-checker` | Checking story quality before development. Same 8-dimension rubric as `/check`. |
 | `ado-brd-writer` | Creating or drafting a BRD. Runs the Figma check as part of requirements elicitation. |
 | `ado-brd-to-stories` | Decomposing a BRD into ADO user stories. |
@@ -511,14 +550,18 @@ claude-ado-toolkit/
 
 All slash command behaviour is controlled by `CLAUDE.md` in your project repo. Key sections to update:
 
-| Section | What to update |
-|---------|---------------|
-| **End-to-End Delivery Pipeline** | Phase owners, entry conditions, gate criteria |
-| **Team structure** | Full roster with names, roles, sub-teams |
-| **Definition of Ready** | PO sign-off field and person, additional criteria |
-| **Azure DevOps context** | Org URL, project names, repo remote URLs |
-| **Coding standards** | Tech stack, naming conventions, PR size limits |
-| **Story point estimation model** | Adjust capacity ratio if your AI uplift differs |
+| Section | What to update | When |
+|---------|---------------|------|
+| **Branching strategy** | Branch naming rules, merge target, merge strategy, who can create each type | Before first `/implement` run — leads fill this in |
+| **Codebase structure** | Folder paths, component library, state management, ORM, auth pattern | Before first `/implement` run — leads fill this in |
+| **Team structure** | Full roster with names, roles, sub-teams | At setup and when team changes |
+| **Definition of Ready** | PO sign-off field and person (per project), additional criteria | At setup |
+| **End-to-End Delivery Pipeline** | Phase owners, entry conditions, gate criteria | At setup |
+| **Azure DevOps context** | Org URL, project names, repo remote URLs | At setup |
+| **Coding standards** | Tech stack, naming conventions, PR size limits | At setup |
+| **Story point estimation model** | Adjust capacity ratio if your AI uplift differs | Optional |
+
+The **Branching strategy** and **Codebase structure** sections ship as placeholders — only your team knows the real values. Claude will update them accurately if you describe the rules in chat.
 
 To change defaults for **all future projects**, edit `CLAUDE.template.md` in this toolkit repo and re-run `scripts/init.ps1`.
 
