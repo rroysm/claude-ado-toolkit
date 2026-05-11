@@ -4,8 +4,22 @@
   "description": "Claude Code AI toolkit for Azure DevOps — slash commands, agents, and BRD-to-PR pipeline",
   "type": "module",
   "private": true,
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
+  },
   "dependencies": {
+    "@azure/communication-sms": "^1.2.0-beta.4",
+    "@azure/service-bus": "^7.9.5",
     "docx": "^9.6.1",
+    "express": "^4.22.1",
     "pptxgenjs": "^3.12.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
   }
 }
