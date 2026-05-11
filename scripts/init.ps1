@@ -111,6 +111,44 @@ $p2TeamSection  = if ($hasP2) {
 "@
 } else { '' }
 
+$p2BranchingSection = if ($hasP2) {
+    @"
+
+### $p2Name
+
+| Branch type | Naming convention | Merge target | Who can create |
+|-------------|------------------|--------------|----------------|
+| Feature / User Story / Enhancement | ``feature/[id]-[short-title]`` | ``$mainBranch`` | Any developer |
+| Bug fix | ``bugfix/[id]-[short-title]`` | ``$mainBranch`` | Any developer |
+| Hotfix (production incident) | ``hotfix/[id]-[short-title]`` | ``$mainBranch`` | Lead only |
+| Release | ``[TO BE CONFIRMED]`` | — | — |
+
+Default merge strategy: ``[TO BE CONFIRMED]``
+Branch protection on ``$mainBranch``: ``[TO BE CONFIRMED]``
+"@
+} else { '' }
+
+$p2CodebaseSection = if ($hasP2) {
+    @"
+
+### $p2Name
+
+| Layer | Root folder | Notes |
+|-------|-------------|-------|
+| Frontend | ``[TO BE CONFIRMED]`` | React app root |
+| Backend | ``[TO BE CONFIRMED]`` | Node.js/Express root |
+| Tests | ``[TO BE CONFIRMED]`` | Jest test root |
+| Config / env | ``[TO BE CONFIRMED]`` | .env files, config |
+| Shared types | ``[TO BE CONFIRMED]`` | TypeScript interfaces |
+
+- Component library: ``[TO BE CONFIRMED]``
+- State management: ``[TO BE CONFIRMED]``
+- API pattern: ``[TO BE CONFIRMED]``
+- DB / ORM: ``[TO BE CONFIRMED]``
+- Auth pattern: ``[TO BE CONFIRMED]``
+"@
+} else { '' }
+
 # ── Read template and replace placeholders ────────────────────────────────────
 
 Write-Host ''
@@ -128,6 +166,8 @@ $content = $content -replace '\{\{PROJECT_1_REPO\}\}',      $p1Repo
 $content = $content -replace '\{\{PROJECT_2_REMOTE_ROW\}\}',$p2RemoteRow
 $content = $content -replace '\{\{PROJECT_2_SUPPORTED_ROW\}\}',$p2SupportedRow
 $content = $content -replace '\{\{PROJECT_2_TEAM_SECTION\}\}',$p2TeamSection
+$content = $content -replace '\{\{PROJECT_2_BRANCHING_SECTION\}\}',$p2BranchingSection
+$content = $content -replace '\{\{PROJECT_2_CODEBASE_SECTION\}\}',$p2CodebaseSection
 $content = $content -replace '\{\{MAIN_BRANCH\}\}',         $mainBranch
 
 # Replace the "DO NOT EDIT" warning with a generated-by header
@@ -175,6 +215,10 @@ Write-Host ''
 Write-Host 'Next steps:' -ForegroundColor White
 Write-Host ''
 Write-Host '  1. Fill in your team members in CLAUDE.md (Team structure section)' -ForegroundColor White
+Write-Host ''
+Write-Host '     Also complete these two placeholder sections in CLAUDE.md:' -ForegroundColor White
+Write-Host '       - Branching strategy  (describe your rules, say "update CLAUDE.md branching strategy")' -ForegroundColor Gray
+Write-Host '       - Codebase structure  (share folder tree, say "update CLAUDE.md codebase structure")' -ForegroundColor Gray
 Write-Host ''
 Write-Host '  2. Register the ADO MCP server with Claude Code CLI (run once):' -ForegroundColor White
 Write-Host "       claude mcp add azure-devops -- npx -y @azure-devops/mcp $adoOrg" -ForegroundColor Yellow

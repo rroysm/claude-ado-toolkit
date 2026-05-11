@@ -113,6 +113,128 @@ When a story depends on an unresolved external item:
 
 ---
 
+## Work Classification & Scenario Playbook
+
+Every work item that reaches Phase 4 must be classified before any code is written. Claude reads the story title, description, and AC to determine the type, then follows the matching playbook below.
+
+### Step 1 — Classify the work
+
+| Dimension | Options |
+|-----------|---------|
+| **Layer** | Frontend · Backend · Full-stack |
+| **Nature** | New (greenfield) · Modify existing · Bug fix · Code quality / Refactor |
+
+---
+
+### Playbook A — New Frontend Page (Greenfield)
+
+1. Check for an existing route file — add the new route there, do not create a parallel routing system.
+2. Check for a shared layout/template/wrapper — reuse it exactly as other pages do.
+3. **If a Figma link exists in the story:** fetch the design via Figma MCP before writing any UI code. Extract screen names, field labels, validation rules, navigation flows, empty/error/loading states.
+4. Scaffold in this order: route → page component → child components → custom hook (if logic exceeds ~30 lines) → unit tests.
+5. Follow existing naming conventions and folder structure exactly — do not introduce new patterns.
+6. Every new component must be covered by at least one test.
+
+---
+
+### Playbook B — Modify Existing Frontend Page/Component
+
+1. **ALWAYS read the existing file(s) in full before writing a single line.**
+2. Glob/Grep for all files that import or reference the component being changed — understand the blast radius.
+3. Make the **smallest change** that satisfies the AC. Do not refactor, clean up, or improve surrounding code unless the story explicitly asks for it.
+4. Preserve existing prop interfaces — extend, never break. If a prop type must change, flag it as a breaking change in the PR description.
+5. Run existing tests after your changes. Add tests only for new behaviour being introduced.
+
+---
+
+### Playbook C — New Backend API Endpoint
+
+1. Read existing route files to understand the established pattern (file naming, middleware chain, validation approach, error handling).
+2. Follow the same service-layer and repository pattern already in use — do not introduce a new architectural pattern.
+3. Add input validation at the route boundary.
+4. Add: a unit test for the service layer + an integration test for the route.
+5. Document the endpoint in the PR description: method, path, auth requirement, request shape, response shape, error codes.
+
+---
+
+### Playbook D — Modify Existing Backend Service/Route
+
+1. **ALWAYS read the existing route, service, and any repository/helper files before writing.**
+2. Grep for all callers of the function or method being changed — check for unintended side-effects.
+3. Make targeted changes only. Do not reorganise the file or rename unrelated symbols.
+4. Run the full test suite for the affected module after changes.
+5. If the change alters a public API shape, state explicitly in the PR description whether it is a **breaking** or **non-breaking** change.
+
+---
+
+### Playbook E — Bug Fix (Frontend or Backend)
+
+1. **Reproduce first.** Identify the exact file and line where the bug originates. Do not guess.
+2. Read the surrounding code to understand *why* the bug exists.
+3. Write the **minimal fix**. Do not add unrelated improvements.
+4. Add a regression test that would have caught this bug.
+5. PR description must include: **Root cause:** [X]. **Fix:** [Y]. **Regression test:** [Z].
+
+---
+
+### Playbook F — Code Quality / Refactor
+
+1. Scope is strictly limited to what the story or task describes. Do not expand beyond it.
+2. **No observable behaviour changes.** If a refactor accidentally alters behaviour, flag it and stop.
+3. Run the full test suite before starting and after finishing. If any test breaks, it is a blocking issue.
+4. PR description must include before/after metrics where measurable.
+
+---
+
+### Playbook G — Full-Stack Story (Touches Both Layers)
+
+1. **Read the backend first.** Understand the API contract the frontend will consume.
+2. If the backend endpoint does **not yet exist**: implement backend → tests → document the API shape → then implement frontend.
+3. If the backend endpoint **already exists**: read it fully before writing any frontend code.
+4. Deliver both layers in a single branch and single PR unless the story explicitly splits them.
+5. PR description must contain a short API contract summary: endpoint, method, request, response, auth.
+
+---
+
+## Codebase Exploration Protocol
+
+**For any Modify, Bug Fix, Code Quality, or Full-Stack work — run this sequence before writing any code.**
+
+| Step | Action |
+|------|--------|
+| 1 | **Locate the entry point** — find the exact file containing the component, route, or service to be changed. |
+| 2 | **Read the full file** — never make changes based on a partial read. |
+| 3 | **Trace dependencies** — Grep for all imports of that file; understand what depends on it. |
+| 4 | **Find the tests** — locate the corresponding test file(s); understand what is already covered. |
+| 5 | **Check types/interfaces** — if TypeScript, find the type definitions the file uses. |
+| 6 | **Note environment variables** — identify any `process.env` reads; never hardcode them in changes. |
+
+For **greenfield (Playbook A or C)**: steps 3–6 still apply to understand the existing patterns you must follow.
+
+---
+
+## Branching strategy — TO BE CONFIRMED BY LEADS
+
+> This section must be completed by the team leads before running `/implement` against the real codebase.
+> Until confirmed, Claude uses the defaults shown below.
+> To update: describe your branching rules and say **"update CLAUDE.md branching strategy for [project]"**.
+
+### {{PROJECT_1_NAME}}
+
+| Branch type | Naming convention | Merge target | Who can create |
+|-------------|------------------|--------------|----------------|
+| Feature / User Story / Enhancement | `feature/[id]-[short-title]` | `{{MAIN_BRANCH}}` | Any developer |
+| Bug fix | `bugfix/[id]-[short-title]` | `{{MAIN_BRANCH}}` | Any developer |
+| Hotfix (production incident) | `hotfix/[id]-[short-title]` | `{{MAIN_BRANCH}}` | Lead only |
+| Release | `[TO BE CONFIRMED]` | — | — |
+
+Default merge strategy: `[TO BE CONFIRMED — Squash / Merge commit / Rebase]`
+Branch protection on `{{MAIN_BRANCH}}`: `[TO BE CONFIRMED]`
+
+{{PROJECT_2_BRANCHING_SECTION}}
+
+---
+
 ## Project overview
 
 {{APP_NAME}} is a 100% Azure shop — all infrastructure, services, and tooling run on Azure.
@@ -201,6 +323,31 @@ Apply these standards in all code review and generation tasks.
 
 ---
 
+## Codebase structure — TO BE CONFIRMED BY LEADS
+
+> Fill in this section with actual folder paths and stack details before first use.
+> To update: share the folder tree or a short description and say **"update CLAUDE.md codebase structure for [project]"**.
+
+### {{PROJECT_1_NAME}}
+
+| Layer | Root folder | Notes |
+|-------|-------------|-------|
+| Frontend | `[TO BE CONFIRMED]` | React app root |
+| Backend | `[TO BE CONFIRMED]` | Node.js/Express root |
+| Tests | `[TO BE CONFIRMED]` | Jest test root |
+| Config / env | `[TO BE CONFIRMED]` | .env files, config |
+| Shared types | `[TO BE CONFIRMED]` | TypeScript interfaces |
+
+- Component library: `[TO BE CONFIRMED — e.g. Material UI / Ant Design / custom]`
+- State management: `[TO BE CONFIRMED — e.g. Redux / Zustand / React Context]`
+- API pattern: `[TO BE CONFIRMED — e.g. REST / GraphQL]`
+- DB / ORM: `[TO BE CONFIRMED — e.g. Sequelize / Prisma / raw Azure SQL]`
+- Auth pattern: `[TO BE CONFIRMED — e.g. Azure AD / JWT / session]`
+
+{{PROJECT_2_CODEBASE_SECTION}}
+
+---
+
 ## Team structure
 
 ### {{PROJECT_1_NAME}}
@@ -241,7 +388,7 @@ All slash commands require `--project` and `--team` flags. Supported values:
 | `/stories AB#[epic]` | Decompose BRD into ADO stories; MoSCoW; traceability matrix | Phase 2 | `/refine` after sprint assignment |
 | `/refine` | Batch RAG quality check on all sprint stories; flags over-capacity | Phase 3 | `/check AB#[id]` for each 🟡/🔴 story |
 | `/check AB#[id]` | Deep-dive quality gate on a single story (8-dimension RAG rubric) | Phase 3 | `/implement AB#[id]` when 🟢 |
-| `/implement AB#[id]` | Full end-to-end: code + tests + branch + PR; updates ADO state | Phase 4 | Assign reviewer; confirm "merged" |
+| `/implement AB#[id]` | Classifies work type → explores codebase → code + tests + branch + PR; updates ADO state | Phase 4 | Assign reviewer; confirm "merged" |
 | `/sprint` | Scrum Master board — all sprint items by status & assignee | Planning | — |
 | `/standup` | Standup prep notes (before) or Teams summary (after, `--post` to auto-send) | Daily | — |
 | `/velocity` | Multi-sprint velocity trends; `--export ppt` or `--export pdf` | Reporting | — |
