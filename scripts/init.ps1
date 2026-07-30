@@ -1,4 +1,4 @@
-# ─────────────────────────────────────────────────────────────────────────────
+﻿# ─────────────────────────────────────────────────────────────────────────────
 # Claude Code ADO Setup Script
 # Generates CLAUDE.md from CLAUDE.template.md for your ADO project.
 #
@@ -43,6 +43,20 @@ function Prompt-YesNo {
     return $val -eq 'Y'
 }
 
+function Get-ExistingValue {
+    param([string]$Field, $Fallback = $null)
+    if ($existing -and $existing.$Field) { return $existing.$Field }
+    return $Fallback
+}
+
+function Get-ExistingProject {
+    param([int]$Index, [string]$Field)
+    if ($existing -and $existing.projects -and $existing.projects[$Index]) {
+        return $existing.projects[$Index].$Field
+    }
+    return $null
+}
+
 # ── Banner ────────────────────────────────────────────────────────────────────
 
 Write-Host ''
@@ -66,30 +80,30 @@ if (Test-Path $ConfigFile) {
 # ── Collect inputs ────────────────────────────────────────────────────────────
 
 Write-Host '── Step 1: Azure DevOps organisation ───────────────────────────' -ForegroundColor DarkCyan
-$adoOrg = Prompt-Required 'ADO organisation name (e.g. contoso)' ($existing?.adoOrg)
+$adoOrg = Prompt-Required 'ADO organisation name (e.g. contoso)' (Get-ExistingValue 'adoOrg')
 $adoOrgUrl = "https://dev.azure.com/$adoOrg"
 
 Write-Host ''
 Write-Host '── Step 2: Primary project ─────────────────────────────────────' -ForegroundColor DarkCyan
-$p1Name = Prompt-Required 'Project name (e.g. IRIS)'         ($existing?.projects[0]?.name)
-$p1Team = Prompt-Required 'Team name (e.g. IRIS Team)'       ($existing?.projects[0]?.team)
-$p1Repo = Prompt-Required 'Repo name (e.g. Iris)'            ($existing?.projects[0]?.repo)
+$p1Name = Prompt-Required 'Project name (e.g. IRIS)'         (Get-ExistingProject 0 'name')
+$p1Team = Prompt-Required 'Team name (e.g. IRIS Team)'       (Get-ExistingProject 0 'team')
+$p1Repo = Prompt-Required 'Repo name (e.g. Iris)'            (Get-ExistingProject 0 'repo')
 
 Write-Host ''
 Write-Host '── Step 3: Second project (optional) ───────────────────────────' -ForegroundColor DarkCyan
 $hasP2 = Prompt-YesNo 'Add a second ADO project?'
 $p2Name = ''; $p2Team = ''; $p2Repo = ''
 if ($hasP2) {
-    $p2Name = Prompt-Required 'Second project name' ($existing?.projects[1]?.name)
-    $p2Team = Prompt-Required 'Second team name'    ($existing?.projects[1]?.team)
-    $p2Repo = Prompt-Required 'Second repo name'    ($existing?.projects[1]?.repo)
+    $p2Name = Prompt-Required 'Second project name' (Get-ExistingProject 1 'name')
+    $p2Team = Prompt-Required 'Second team name'    (Get-ExistingProject 1 'team')
+    $p2Repo = Prompt-Required 'Second repo name'    (Get-ExistingProject 1 'repo')
 }
 
 Write-Host ''
 Write-Host '── Step 4: App details ─────────────────────────────────────────' -ForegroundColor DarkCyan
-$appName    = Prompt-Required 'Application / product name (e.g. IRIS)' ($existing?.appName ?? $p1Name)
-$techStack  = Prompt-Required 'Tech stack (e.g. React frontend, Node.js backend)' ($existing?.techStack ?? 'React frontend, Node.js backend')
-$mainBranch = Prompt-Required 'Main branch name' ($existing?.mainBranch ?? 'main')
+$appName    = Prompt-Required 'Application / product name (e.g. IRIS)' (Get-ExistingValue 'appName' $p1Name)
+$techStack  = Prompt-Required 'Tech stack (e.g. React frontend, Node.js backend)' (Get-ExistingValue 'techStack' 'React frontend, Node.js backend')
+$mainBranch = Prompt-Required 'Main branch name' (Get-ExistingValue 'mainBranch' 'main')
 
 # ── Build replacement values ──────────────────────────────────────────────────
 
